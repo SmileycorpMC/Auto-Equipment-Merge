@@ -1,6 +1,7 @@
 package net.smileycorp.autoequipmerge;
 
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
@@ -11,6 +12,8 @@ import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.smileycorp.autoequipmerge.network.EnumInventoryType;
+import net.smileycorp.autoequipmerge.network.NetworkHandler;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +24,7 @@ public class AutoEquipmentMerge {
     
     @Mod.EventHandler
     public static void preInit(FMLPreInitializationEvent event) {
+        NetworkHandler.init();
         ConfigHandler.syncConfig(new Configuration(event.getSuggestedConfigurationFile()));
     }
     
@@ -31,13 +35,14 @@ public class AutoEquipmentMerge {
         if (player.world.isRemote) return;
         ItemStack stack = event.getItem().getItem();
         if (!stack.isItemStackDamageable() |!stack.isItemDamaged()) return;
-        if (ConfigHandler.mergeArmorSlots) if (tryToMerge(player, stack, player.inventory.armorInventory)) return;
-        if (tryToMerge(player, stack, player.inventory.mainInventory.subList(0, 9))) return;
-        if (ConfigHandler.mergeOffhand) if (tryToMerge(player, stack, player.inventory.offHandInventory)) return;
-        if (!ConfigHandler.hotbarOnly) tryToMerge(player, stack, player.inventory.mainInventory.subList(9, player.inventory.mainInventory.size()));
+        if (ConfigHandler.mergeArmorSlots) if (tryToMerge(player, stack, player.inventory.armorInventory, EnumInventoryType.ARMOUR)) return;
+        if (tryToMerge(player, stack, player.inventory.mainInventory.subList(0, 9), EnumInventoryType.HOTBAR)) return;
+        if (ConfigHandler.mergeOffhand) if (tryToMerge(player, stack, player.inventory.offHandInventory, EnumInventoryType.OFFHAND)) return;
+        if (!ConfigHandler.hotbarOnly) tryToMerge(player, stack, player.inventory.mainInventory.subList(9, player.inventory.mainInventory.size()),
+                EnumInventoryType.MAIN);
     }
     
-    private static boolean tryToMerge(EntityPlayer player, ItemStack toAdd, List<ItemStack> inventory) {
+    private static boolean tryToMerge(EntityPlayer player, ItemStack toAdd, List<ItemStack> inventory, EnumInventoryType type) {
         for (int i = 0; i < inventory.size(); i++) {
             ItemStack stack = inventory.get(i);
             if (!matches(toAdd, stack)) continue;
@@ -50,11 +55,13 @@ public class AutoEquipmentMerge {
                         (player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 1.4f + 2);
             }
             else {
+                damage = stack.getItemDamage();
                 toAdd.setItemDamage(stack.getMaxDamage() - stack.getItemDamage());
                 stack.setItemDamage(0);
             }
             if (ConfigHandler.nbtMatch == 2 && stack.hasTagCompound()) stack.getTagCompound().merge(toAdd.getTagCompound());
             if (ConfigHandler.nbtMatch == 4) stack.setTagCompound(null);
+            NetworkHandler.sendMessage((EntityPlayerMP) player, type.getSlot((byte) i), damage);
             return true;
         }
         return false;

@@ -1,0 +1,15 @@
+{
+  "compatibilityLevel": "JAVA_8",
+  "package": "net.smileycorp.autoequipmerge.mixin",
+  "refmap": "mixins.autoequipmerge.refmap.json",
+  "mixins": [
+
+  ],
+  "client": [
+    "MixinGuiContainer",
+    "MixinGuiIngame",
+    "MixinItem",
+    "MixinRenderItem"
+  ],
+  "server": []
+}
