@@ -3,6 +3,7 @@ package net.smileycorp.autoequipmerge;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
 import net.minecraftforge.common.config.Configuration;
@@ -37,7 +38,7 @@ public class AutoEquipmentMerge {
     }
     
     private static boolean tryToMerge(EntityPlayer player, ItemStack toAdd, List<ItemStack> inventory) {
-        for (int i = 0; i < Math.min(inventory.size(), 9); i++) {
+        for (int i = 0; i < inventory.size(); i++) {
             ItemStack stack = inventory.get(i);
             if (!matches(toAdd, stack)) continue;
             if (!matchesNBT(toAdd, stack)) continue;
@@ -52,26 +53,23 @@ public class AutoEquipmentMerge {
                 toAdd.setItemDamage(stack.getMaxDamage() - stack.getItemDamage());
                 stack.setItemDamage(0);
             }
-            switch (ConfigHandler.nbtMatch) {
-                case 2:
-                    stack.getTagCompound().merge(toAdd.getTagCompound());
-                    break;
-                case 4:
-                    stack.setTagCompound(null);
-                    break;
-            }
+            if (ConfigHandler.nbtMatch == 2 && stack.hasTagCompound()) stack.getTagCompound().merge(toAdd.getTagCompound());
+            if (ConfigHandler.nbtMatch == 4) stack.setTagCompound(null);
             return true;
         }
         return false;
     }
     
     private static boolean matches(ItemStack toAdd, ItemStack stack) {
+        if (!stack.isItemStackDamageable() || stack.isItemDamaged()) return false;
         if (ConfigHandler.itemMatch == 2) {
             Item item = stack.getItem();
             Item addItem = toAdd.getItem();
             if (item instanceof ItemSword && addItem instanceof ItemSword) return true;
             if (item.getEquipmentSlot(stack) != null && item.getEquipmentSlot(stack) == addItem.getEquipmentSlot(toAdd)) return true;
-            return !Collections.disjoint(item.getToolClasses(stack), addItem.getToolClasses(toAdd));
+            if (item instanceof ItemArmor && addItem instanceof ItemArmor)
+                if (((ItemArmor) item).getEquipmentSlot() == ((ItemArmor) addItem).getEquipmentSlot()) return true;
+            if (!Collections.disjoint(item.getToolClasses(stack), addItem.getToolClasses(toAdd))) return true;
         }
         return stack.getItem() == toAdd.getItem();
     }
@@ -79,7 +77,7 @@ public class AutoEquipmentMerge {
     private static boolean matchesNBT(ItemStack toAdd, ItemStack stack) {
         if (ConfigHandler.nbtMatch != 1) return true;
         if (stack.hasTagCompound() != toAdd.hasTagCompound()) return false;
-        if (stack.hasTagCompound() &! stack.getTagCompound().equals(toAdd.getTagCompound())) return false;
+        if (stack.hasTagCompound()) if (!stack.getTagCompound().equals(toAdd.getTagCompound())) return false;
         return stack.areCapsCompatible(toAdd);
     }
     
