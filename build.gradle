@@ -15,7 +15,7 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'java'
 
-version = "1.12.2-1.0.0-DEV3"
+version = "1.12.2-beta-0.1.0"
 group = "net.smileycorp.autoequipmerge"
 archivesBaseName = "Auto-Equipment-Merge"
 
