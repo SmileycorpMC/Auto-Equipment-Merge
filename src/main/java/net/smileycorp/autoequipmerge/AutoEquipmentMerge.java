@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.util.Collections;
 import java.util.List;
 
-@Mod(modid = Constants.MODID, name = Constants.NAME, version = Constants.VERSION)
+@Mod(modid = Constants.MODID, name = Constants.NAME, version = Constants.VERSION, acceptableRemoteVersions="*")
 @Mod.EventBusSubscriber(modid = Constants.MODID)
 public class AutoEquipmentMerge {
     
