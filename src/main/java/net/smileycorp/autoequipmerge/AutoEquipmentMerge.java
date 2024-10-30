@@ -61,7 +61,7 @@ public class AutoEquipmentMerge {
     }
     
     private static boolean matches(ItemStack toAdd, ItemStack stack) {
-        if (!stack.isItemStackDamageable() || stack.isItemDamaged()) return false;
+        if (!stack.isItemStackDamageable() |! stack.isItemDamaged()) return false;
         if (ConfigHandler.itemMatch == 2) {
             Item item = stack.getItem();
             Item addItem = toAdd.getItem();
