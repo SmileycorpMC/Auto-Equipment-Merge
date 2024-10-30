@@ -15,9 +15,9 @@ apply plugin: 'net.minecraftforge.gradle'
 apply plugin: 'eclipse'
 apply plugin: 'java'
 
-version = "1.12.2-beta-0.1.0"
+version = "1.12.2-1.0.0"
 group = "net.smileycorp.autoequipmerge"
-archivesBaseName = "Auto-Equipment-Merge"
+archivesBaseName = "Auto-Equip-Merge"
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8' // Need this here so eclipse task generates correctly.
 
