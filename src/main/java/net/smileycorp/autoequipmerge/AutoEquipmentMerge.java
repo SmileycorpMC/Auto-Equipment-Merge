@@ -5,7 +5,6 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemSword;
-import net.minecraft.util.NonNullList;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -13,6 +12,7 @@ import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
 import java.util.Collections;
+import java.util.List;
 
 @Mod(modid = Constants.MODID, name = Constants.NAME, version = Constants.VERSION)
 @Mod.EventBusSubscriber(modid = Constants.MODID)
@@ -30,12 +30,13 @@ public class AutoEquipmentMerge {
         if (player.world.isRemote) return;
         ItemStack stack = event.getItem().getItem();
         if (!stack.isItemStackDamageable() |!stack.isItemDamaged()) return;
-        if (tryToMerge(player, stack, player.inventory.armorInventory)) return;
-        if (tryToMerge(player, stack, player.inventory.mainInventory)) return;
-        tryToMerge(player, stack, player.inventory.offHandInventory);
+        if (ConfigHandler.mergeArmorSlots) if (tryToMerge(player, stack, player.inventory.armorInventory)) return;
+        if (tryToMerge(player, stack, player.inventory.mainInventory.subList(0, 9))) return;
+        if (ConfigHandler.mergeOffhand) if (tryToMerge(player, stack, player.inventory.offHandInventory)) return;
+        if (!ConfigHandler.hotbarOnly) tryToMerge(player, stack, player.inventory.mainInventory.subList(9, player.inventory.mainInventory.size()));
     }
     
-    private static boolean tryToMerge(EntityPlayer player, ItemStack toAdd, NonNullList<ItemStack> inventory) {
+    private static boolean tryToMerge(EntityPlayer player, ItemStack toAdd, List<ItemStack> inventory) {
         for (int i = 0; i < Math.min(inventory.size(), 9); i++) {
             ItemStack stack = inventory.get(i);
             if (!matches(toAdd, stack)) continue;
