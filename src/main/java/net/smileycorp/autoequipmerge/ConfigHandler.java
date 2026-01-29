@@ -4,10 +4,11 @@ import net.minecraftforge.common.config.Configuration;
 
 public class ConfigHandler {
     
-    public static int itemMatch, nbtMatch = 1;
-    public static boolean hotbarOnly = false;
-    public static boolean mergeArmorSlots = true;
-    public static boolean mergeOffhand = true;
+    public static int itemMatch, nbtMatch;
+    public static boolean hotbarOnly;
+    public static boolean mergeArmorSlots;
+    public static boolean mergeOffhand;
+    public static boolean mergePastFull;
     
     public static void syncConfig(Configuration config) {
         try {
@@ -17,6 +18,7 @@ public class ConfigHandler {
             hotbarOnly = config.getBoolean("hotbarOnly", "General", false, "Whether to only merge items in the hotbar, instead of full inventory?");
             mergeArmorSlots = config.getBoolean("mergeArmorSlots", "General", true, "Whether to merge items in armour slots? Ignores hotbarOnly");
             mergeOffhand = config.getBoolean("mergeOffhand", "General", true, "Whether to merge items in the offhand? Ignores hotbarOnly");
+            mergePastFull = config.getBoolean("mergePastFull", "General", false, "Whether to merge items even if the item to merge into's durability would be full?");
         } catch (Exception e) {
         } finally {
             config.save();

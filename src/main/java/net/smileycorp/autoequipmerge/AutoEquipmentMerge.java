@@ -34,7 +34,7 @@ public class AutoEquipmentMerge {
         if (player == null) return;
         if (player.world.isRemote) return;
         ItemStack stack = event.getItem().getItem();
-        if (!stack.isItemStackDamageable() |!stack.isItemDamaged()) return;
+        if (!stack.isItemStackDamageable() || (!ConfigHandler.mergePastFull &! stack.isItemDamaged())) return;
         if (ConfigHandler.mergeArmorSlots) if (tryToMerge(player, stack, player.inventory.armorInventory, EnumInventoryType.ARMOUR)) return;
         if (tryToMerge(player, stack, player.inventory.mainInventory.subList(0, 9), EnumInventoryType.HOTBAR)) return;
         if (ConfigHandler.mergeOffhand) if (tryToMerge(player, stack, player.inventory.offHandInventory, EnumInventoryType.OFFHAND)) return;
@@ -48,9 +48,9 @@ public class AutoEquipmentMerge {
             if (!matches(toAdd, stack)) continue;
             if (!matchesNBT(toAdd, stack)) continue;
             int damage = toAdd.getMaxDamage() - toAdd.getItemDamage() + 1;
-            if (stack.getItemDamage() - damage >= 0) {
+            if (ConfigHandler.mergePastFull || stack.getItemDamage() - damage >= 0) {
                 toAdd.shrink(1);
-                stack.setItemDamage(stack.getItemDamage() - damage);
+                stack.setItemDamage(Math.max(stack.getItemDamage() - damage, 0));
                 player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ITEM_PICKUP, player.getSoundCategory(), 0.2f,
                         (player.getRNG().nextFloat() - player.getRNG().nextFloat()) * 1.4f + 2);
             }
@@ -68,7 +68,7 @@ public class AutoEquipmentMerge {
     }
     
     private static boolean matches(ItemStack toAdd, ItemStack stack) {
-        if (!stack.isItemStackDamageable() |! stack.isItemDamaged()) return false;
+        if (!stack.isItemStackDamageable() || (!ConfigHandler.mergePastFull &! stack.isItemDamaged())) return false;
         if (ConfigHandler.itemMatch == 2) {
             Item item = stack.getItem();
             Item addItem = toAdd.getItem();
