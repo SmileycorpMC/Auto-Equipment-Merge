@@ -54,7 +54,7 @@ public class ItemMergeRenderer {
     }
     
     public float getTimePercentage() {
-        return (player.world.getTotalWorldTime() + Minecraft.getMinecraft().getRenderPartialTicks() - getCurrentSlot().getFirst()) / 10f;
+        return (player.world.getTotalWorldTime() + Minecraft.getMinecraft().getRenderPartialTicks() - getCurrentSlot().getFirst()) / 30f;
     }
     
     public float getTimeDamage() {
@@ -65,7 +65,7 @@ public class ItemMergeRenderer {
     
     public boolean renderSwell() {
         if (!hasCurrentSlot()) return false;
-        return player.world.getTotalWorldTime() + Minecraft.getMinecraft().getRenderPartialTicks() > getCurrentSlot().getFirst() + 10;
+        return player.world.getTotalWorldTime() + Minecraft.getMinecraft().getRenderPartialTicks() > getCurrentSlot().getFirst();
     }
     
 }
