@@ -7,7 +7,7 @@ public enum Inventory {
     ARMOUR((byte) 36),
     OFFHAND((byte) 40);
     
-    private final int start;
+    private final byte start;
     
     Inventory(byte start) {
         this.start = start;

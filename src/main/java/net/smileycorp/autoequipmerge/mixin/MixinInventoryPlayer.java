@@ -16,10 +16,10 @@ public class MixinInventoryPlayer {
 
     @Shadow public EntityPlayer player;
 
-    @Inject(at = @At("HEAD"), method = "setInventorySlotContents", cancellable = true)
+    @Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/util/NonNullList;set(ILjava/lang/Object;)Ljava/lang/Object;"), method = "setInventorySlotContents", cancellable = true)
     public void autoequipmerge$setInventorySlotContents(int slot, ItemStack stack, CallbackInfo callback) {
-        if (ConfigHandler.getInstance(player.world).pickupOnly) return;
-        if (AutoEquipmentMerge.tryToMerge(player, stack)) callback.cancel();
+        if (ConfigHandler.getInstance(player.world).pickupOnly || slot < 0) return;
+        if (AutoEquipmentMerge.tryToMerge(player, stack, slot)) callback.cancel();
     }
     
 }

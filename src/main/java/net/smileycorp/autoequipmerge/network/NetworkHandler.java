@@ -15,8 +15,8 @@ public class NetworkHandler {
         NETWORK_INSTANCE.registerMessage(SyncSettingsMessage::process, SyncSettingsMessage.class, 1, Side.CLIENT);
     }
     
-    public static void sendMergeMessage(EntityPlayerMP player, byte slot, int damage) {
-        NETWORK_INSTANCE.sendTo(new EquipmentMergeMessage(slot, damage), player);
+    public static void sendMergeMessage(EntityPlayerMP player, byte slot, int change, int damage) {
+        NETWORK_INSTANCE.sendTo(new EquipmentMergeMessage(slot, change, damage), player);
     }
 
     public static void sendSyncMessage(EntityPlayerMP player) {

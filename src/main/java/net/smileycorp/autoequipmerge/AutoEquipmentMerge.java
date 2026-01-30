@@ -41,22 +41,23 @@ public class AutoEquipmentMerge {
     public static void pickup(EntityItemPickupEvent event) {
         EntityPlayer player = event.getEntityPlayer();
         if (player == null) return;
-        if (!ConfigHandler.clientInstance.pickupOnly) return;
-        tryToMerge(player, event.getItem().getItem());
+        tryToMerge(player, event.getItem().getItem(), -1);
     }
 
-    public static boolean tryToMerge(EntityPlayer player, ItemStack stack) {
+    public static boolean tryToMerge(EntityPlayer player, ItemStack stack, int slot) {
         ConfigHandler config = ConfigHandler.getInstance(player.world);
         if (!stack.isItemStackDamageable() || (!config.mergePastFull &! stack.isItemDamaged())) return false;
-        if (config.mergeArmorSlots && tryToMerge(player, stack, player.inventory.armorInventory, Inventory.ARMOUR)) return true;
-        if (tryToMerge(player, stack, player.inventory.mainInventory.subList(0, 9), Inventory.HOTBAR)) return true;
-        if (config.mergeOffhand && tryToMerge(player, stack, player.inventory.offHandInventory, Inventory.OFFHAND)) return true;
-        return !config.hotbarOnly && tryToMerge(player, stack, player.inventory.mainInventory.subList(9, player.inventory.mainInventory.size()), Inventory.MAIN);
+        if (config.mergeArmorSlots && tryToMerge(player, stack, player.inventory.armorInventory, Inventory.ARMOUR, slot)) return true;
+        if (tryToMerge(player, stack, player.inventory.mainInventory.subList(0, 9), Inventory.HOTBAR, slot)) return true;
+        if (config.mergeOffhand && tryToMerge(player, stack, player.inventory.offHandInventory, Inventory.OFFHAND, slot)) return true;
+        return !config.hotbarOnly && tryToMerge(player, stack, player.inventory.mainInventory.subList(9, player.inventory.mainInventory.size()), Inventory.MAIN, slot);
     }
     
-    public static boolean tryToMerge(EntityPlayer player, ItemStack toAdd, List<ItemStack> inventory, Inventory type) {
+    public static boolean tryToMerge(EntityPlayer player, ItemStack toAdd, List<ItemStack> inventory, Inventory type, int slot) {
         ConfigHandler config = ConfigHandler.getInstance(player.world);
         for (int i = 0; i < inventory.size(); i++) {
+            int slot1 = type.getSlot((byte) i);
+            if (slot1 == slot) continue;
             ItemStack stack = inventory.get(i);
             if (!matches(config, toAdd, stack)) continue;
             if (!matchesNBT(config, toAdd, stack)) continue;
@@ -75,7 +76,7 @@ public class AutoEquipmentMerge {
             }
             if (config.nbtMatch == 2 && stack.hasTagCompound()) stack.getTagCompound().merge(toAdd.getTagCompound());
             if (config.nbtMatch == 4) stack.setTagCompound(null);
-            NetworkHandler.sendMergeMessage((EntityPlayerMP) player, type.getSlot((byte) i), damage);
+            NetworkHandler.sendMergeMessage((EntityPlayerMP) player, (byte) slot1, damage, stack.getItemDamage());
             return true;
         }
         return false;

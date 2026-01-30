@@ -26,8 +26,8 @@ public class ItemMergeRenderer {
         return INSTANCE;
     }
     
-    public void setupRenderer(byte slot, int amount) {
-        System.out.println(slot + ", " + amount);
+    public void setupRenderer(byte slot, int amount, int damage) {
+        Minecraft.getMinecraft().player.inventory.getStackInSlot(slot).setItemDamage(damage);
         entries.put((int) slot, new Tuple(player.world.getTotalWorldTime() + Minecraft.getMinecraft().getRenderPartialTicks(), amount));
     }
     
