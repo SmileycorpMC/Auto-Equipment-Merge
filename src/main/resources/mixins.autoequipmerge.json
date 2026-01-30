@@ -2,7 +2,9 @@
   "compatibilityLevel": "JAVA_8",
   "package": "net.smileycorp.autoequipmerge.mixin",
   "refmap": "mixins.autoequipmerge.refmap.json",
-  "mixins": [],
+  "mixins": [
+    "MixinInventoryPlayer"
+  ],
   "client": [
     "MixinGuiContainer",
     "MixinGuiIngame",

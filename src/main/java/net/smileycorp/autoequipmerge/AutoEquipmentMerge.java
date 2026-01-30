@@ -12,7 +12,8 @@ import net.minecraftforge.event.entity.player.EntityItemPickupEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.smileycorp.autoequipmerge.network.EnumInventoryType;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.smileycorp.autoequipmerge.network.Inventory;
 import net.smileycorp.autoequipmerge.network.NetworkHandler;
 
 import java.util.Collections;
@@ -25,30 +26,43 @@ public class AutoEquipmentMerge {
     @Mod.EventHandler
     public static void preInit(FMLPreInitializationEvent event) {
         NetworkHandler.init();
-        ConfigHandler.syncConfig(new Configuration(event.getSuggestedConfigurationFile()));
+        ConfigHandler.instance.syncConfig(new Configuration(event.getSuggestedConfigurationFile()));
+    }
+
+    @SubscribeEvent
+    public static void logIn(PlayerEvent.PlayerLoggedInEvent event) {
+        EntityPlayer player = event.player;
+        if (player == null) return;
+        if (player.world.isRemote) return;
+        NetworkHandler.sendSyncMessage((EntityPlayerMP) player);
     }
     
     @SubscribeEvent
     public static void pickup(EntityItemPickupEvent event) {
         EntityPlayer player = event.getEntityPlayer();
         if (player == null) return;
-        if (player.world.isRemote) return;
-        ItemStack stack = event.getItem().getItem();
-        if (!stack.isItemStackDamageable() || (!ConfigHandler.mergePastFull &! stack.isItemDamaged())) return;
-        if (ConfigHandler.mergeArmorSlots) if (tryToMerge(player, stack, player.inventory.armorInventory, EnumInventoryType.ARMOUR)) return;
-        if (tryToMerge(player, stack, player.inventory.mainInventory.subList(0, 9), EnumInventoryType.HOTBAR)) return;
-        if (ConfigHandler.mergeOffhand) if (tryToMerge(player, stack, player.inventory.offHandInventory, EnumInventoryType.OFFHAND)) return;
-        if (!ConfigHandler.hotbarOnly) tryToMerge(player, stack, player.inventory.mainInventory.subList(9, player.inventory.mainInventory.size()),
-                EnumInventoryType.MAIN);
+        if (!ConfigHandler.clientInstance.pickupOnly) return;
+        tryToMerge(player, event.getItem().getItem());
+    }
+
+    public static boolean tryToMerge(EntityPlayer player, ItemStack stack) {
+        ConfigHandler config = ConfigHandler.getInstance(player.world);
+        if (!stack.isItemStackDamageable() || (!config.mergePastFull &! stack.isItemDamaged())) return false;
+        if (config.mergeArmorSlots && tryToMerge(player, stack, player.inventory.armorInventory, Inventory.ARMOUR)) return true;
+        if (tryToMerge(player, stack, player.inventory.mainInventory.subList(0, 9), Inventory.HOTBAR)) return true;
+        if (config.mergeOffhand && tryToMerge(player, stack, player.inventory.offHandInventory, Inventory.OFFHAND)) return true;
+        return !config.hotbarOnly && tryToMerge(player, stack, player.inventory.mainInventory.subList(9, player.inventory.mainInventory.size()), Inventory.MAIN);
     }
     
-    private static boolean tryToMerge(EntityPlayer player, ItemStack toAdd, List<ItemStack> inventory, EnumInventoryType type) {
+    public static boolean tryToMerge(EntityPlayer player, ItemStack toAdd, List<ItemStack> inventory, Inventory type) {
+        ConfigHandler config = ConfigHandler.getInstance(player.world);
         for (int i = 0; i < inventory.size(); i++) {
             ItemStack stack = inventory.get(i);
-            if (!matches(toAdd, stack)) continue;
-            if (!matchesNBT(toAdd, stack)) continue;
-            int damage = toAdd.getMaxDamage() - toAdd.getItemDamage() + 1;
-            if (ConfigHandler.mergePastFull || stack.getItemDamage() - damage >= 0) {
+            if (!matches(config, toAdd, stack)) continue;
+            if (!matchesNBT(config, toAdd, stack)) continue;
+            if (config.isClientSide()) return true;
+            int damage = Math.max(toAdd.getMaxDamage() - toAdd.getItemDamage(), 0);
+            if (config.mergePastFull || stack.getItemDamage() - damage >= 0) {
                 toAdd.shrink(1);
                 stack.setItemDamage(Math.max(stack.getItemDamage() - damage, 0));
                 player.world.playSound(null, player.posX, player.posY, player.posZ, SoundEvents.ENTITY_ITEM_PICKUP, player.getSoundCategory(), 0.2f,
@@ -59,17 +73,18 @@ public class AutoEquipmentMerge {
                 toAdd.setItemDamage(stack.getMaxDamage() - stack.getItemDamage());
                 stack.setItemDamage(0);
             }
-            if (ConfigHandler.nbtMatch == 2 && stack.hasTagCompound()) stack.getTagCompound().merge(toAdd.getTagCompound());
-            if (ConfigHandler.nbtMatch == 4) stack.setTagCompound(null);
-            NetworkHandler.sendMessage((EntityPlayerMP) player, type.getSlot((byte) i), damage);
+            if (config.nbtMatch == 2 && stack.hasTagCompound()) stack.getTagCompound().merge(toAdd.getTagCompound());
+            if (config.nbtMatch == 4) stack.setTagCompound(null);
+            NetworkHandler.sendMergeMessage((EntityPlayerMP) player, type.getSlot((byte) i), damage);
             return true;
         }
         return false;
     }
     
-    private static boolean matches(ItemStack toAdd, ItemStack stack) {
-        if (!stack.isItemStackDamageable() || (!ConfigHandler.mergePastFull &! stack.isItemDamaged())) return false;
-        if (ConfigHandler.itemMatch == 2) {
+    private static boolean matches(ConfigHandler config, ItemStack toAdd, ItemStack stack) {
+        if (toAdd == stack) return false;
+        if (!stack.isItemStackDamageable() || (!config.mergePastFull &! stack.isItemDamaged())) return false;
+        if (config.itemMatch == 2) {
             Item item = stack.getItem();
             Item addItem = toAdd.getItem();
             if (item instanceof ItemSword && addItem instanceof ItemSword) return true;
@@ -81,8 +96,8 @@ public class AutoEquipmentMerge {
         return stack.getItem() == toAdd.getItem();
     }
     
-    private static boolean matchesNBT(ItemStack toAdd, ItemStack stack) {
-        if (ConfigHandler.nbtMatch != 1) return true;
+    private static boolean matchesNBT(ConfigHandler config, ItemStack toAdd, ItemStack stack) {
+        if (config.nbtMatch != 1) return true;
         if (stack.hasTagCompound() != toAdd.hasTagCompound()) return false;
         if (stack.hasTagCompound()) if (!stack.getTagCompound().equals(toAdd.getTagCompound())) return false;
         return stack.areCapsCompatible(toAdd);

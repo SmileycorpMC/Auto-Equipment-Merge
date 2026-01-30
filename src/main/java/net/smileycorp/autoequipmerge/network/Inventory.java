@@ -1,6 +1,6 @@
 package net.smileycorp.autoequipmerge.network;
 
-public enum EnumInventoryType {
+public enum Inventory {
     
     HOTBAR((byte) 0),
     MAIN((byte) 9),
@@ -9,7 +9,7 @@ public enum EnumInventoryType {
     
     private final int start;
     
-    EnumInventoryType(byte start) {
+    Inventory(byte start) {
         this.start = start;
     }
     

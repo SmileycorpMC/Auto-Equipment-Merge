@@ -12,10 +12,15 @@ public class NetworkHandler {
     
     public static void init() {
         NETWORK_INSTANCE.registerMessage(EquipmentMergeMessage::process, EquipmentMergeMessage.class, 0, Side.CLIENT);
+        NETWORK_INSTANCE.registerMessage(SyncSettingsMessage::process, SyncSettingsMessage.class, 1, Side.CLIENT);
     }
     
-    public static void sendMessage(EntityPlayerMP player, byte slot, int damage) {
+    public static void sendMergeMessage(EntityPlayerMP player, byte slot, int damage) {
         NETWORK_INSTANCE.sendTo(new EquipmentMergeMessage(slot, damage), player);
+    }
+
+    public static void sendSyncMessage(EntityPlayerMP player) {
+        NETWORK_INSTANCE.sendTo(new SyncSettingsMessage(), player);
     }
     
 }

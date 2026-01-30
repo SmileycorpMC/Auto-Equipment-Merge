@@ -27,6 +27,7 @@ public class ItemMergeRenderer {
     }
     
     public void setupRenderer(byte slot, int amount) {
+        System.out.println(slot + ", " + amount);
         entries.put((int) slot, new Tuple(player.world.getTotalWorldTime() + Minecraft.getMinecraft().getRenderPartialTicks(), amount));
     }
     
